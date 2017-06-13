@@ -1,35 +1,44 @@
 <html>
     <head>
-        <script src="http://requirejs.org/docs/release/2.3.3/minified/require.js"></script>
-    <script>
-console.log('here')
-requirejs(['./Htslib'], function(Htslib) {
-    console.log(Htslib);
-
-    fetch('files/wgEncodeUwRepliSeqBg02esG1bAlnRep1.bam').then(function(file) {
-        console.log(file);
-        var fp = Module.FS_createDataFile('/', 'cram.header', file, 1, 1, 1);
-        var ret = Module.ccall('hts_open', 'number', ['string', 'string'], ['/cram.header', 'rb']);
-        var header = Module.ccall('sam_hdr_read', 'number', ['number'], [ret]);
-        console.log(header);
-        var aln = Module.ccall('bam_init1', 'number', [], []);
-        console.log(aln);
-        // Assumes the struct starts on a 4-byte boundary
-        var myNumber = Module.HEAPU32[header / 4];
-        console.log(myNumber);
-        // Assumes my_char_array is immediately after my_number with no padding
-        var myCharArray = Module.HEAPU8.subarray(header + 4, header + 4 + 32);
-        console.log(myCharArray);
-        if (Module.ccall('sam_read1', 'number', ['number', 'number', 'number'], [ret, header, aln]) >= 0) {
-            var v = Module.ccall('bam_aux_get', 'number', ['number', 'string', 'character'], [aln, 'XA', 'A']);
-            console.log('v', v);
-            var x = Module.ccall('bam_aux2A', 'number', ['number'], [v]);
-            console.log('x', x);
-        }
-    });
-})
-    </script>
+        <script src='Htslib.js'></script>
+        <script src='jquery.js'></script>
     </head>
     <body>
+        <input type='file' id='f'/>
+        <script>
+
+        $(document).ready(function(){
+            console.log("app ready!");
+            fetch('files/wgEncodeUwRepliSeqBg02esG1bAlnRep1.bam').then(function(file) {
+                //parse(file);
+            });
+
+            $('#f').change(function(){
+                var file = this.files[0];
+                parse(file);
+            });
+        });
+
+        function parse(file){
+            var fp = Module.FS_createDataFile('/', 'bamfile', file, 1, 1, 1);
+            var ret = Module.ccall('hts_open', 'number', ['string', 'string'], ['/bamfile', 'rb']);
+            var header = Module.ccall('sam_hdr_read', 'number', ['number'], [ret]);
+            console.log(header);
+            var aln = Module.ccall('bam_init1', 'number', [], []);
+            console.log(aln);
+            // Assumes the struct starts on a 4-byte boundary
+            var myNumber = Module.HEAPU32[header / 4];
+            console.log(myNumber);
+            // Assumes my_char_array is immediately after my_number with no padding
+            var myCharArray = Module.HEAPU8.subarray(header + 4, header + 4 + 32);
+            console.log(myCharArray);
+            if (Module.ccall('sam_read1', 'number', ['number', 'number', 'number'], [ret, header, aln]) >= 0) {
+                var v = Module.ccall('bam_aux_get', 'number', ['number', 'string', 'character'], [aln, 'XA', 'A']);
+                console.log('v', v);
+                var x = Module.ccall('bam_aux2A', 'number', ['number'], [v]);
+                console.log('x', x);
+            }
+        }
+        </script>
     </body>
 </html>
